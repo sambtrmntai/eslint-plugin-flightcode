@@ -17,8 +17,8 @@ import type { Linter } from "eslint";
  * @returns A single flat-config override block.
  */
 export function relaxZones(
-  globs: string[],
-  ruleOverrides: Linter.RulesRecord,
+    globs: string[],
+    ruleOverrides: Linter.RulesRecord,
 ): Linter.Config {
-  return { files: globs, rules: ruleOverrides };
+    return { files: globs, rules: ruleOverrides };
 }

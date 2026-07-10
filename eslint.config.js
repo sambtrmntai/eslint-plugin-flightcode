@@ -15,17 +15,22 @@
 import { configs } from "./dist/index.js";
 
 export default [
-  {
-    ignores: ["node_modules/**", "dist/**", "coverage/**", "eslint.config.js"],
-  },
-  ...configs.recommended,
-  {
-    files: ["**/*.ts"],
-    languageOptions: {
-      parserOptions: {
-        project: "./tsconfig.typecheck.json",
-        tsconfigRootDir: import.meta.dirname,
-      },
+    {
+        ignores: [
+            "node_modules/**",
+            "dist/**",
+            "coverage/**",
+            "eslint.config.js",
+        ],
     },
-  },
+    ...configs.recommended,
+    {
+        files: ["**/*.ts"],
+        languageOptions: {
+            parserOptions: {
+                project: "./tsconfig.typecheck.json",
+                tsconfigRootDir: import.meta.dirname,
+            },
+        },
+    },
 ];

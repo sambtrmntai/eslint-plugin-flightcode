@@ -22,61 +22,61 @@ import type { Linter } from "eslint";
  * shared package. See README.md for the full consumer-setup recipe.
  */
 export const recommended: Linter.Config[] = [
-  js.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
-  {
-    files: ["**/*.ts", "**/*.tsx"],
-    // eslint-plugin-jsdoc and eslint-plugin-eslint-comments ship no type
-    // declarations, so their default exports resolve to `any`.
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- untyped plugin packages resolve to `any`
-    plugins: { jsdoc, "eslint-comments": eslintComments },
-    rules: {
-      // ── Power-of-10 / trust-boundary rules (CI-blocking) ──────────────
-      "@typescript-eslint/no-floating-promises": "error",
-      "@typescript-eslint/no-explicit-any": "error",
-      "@typescript-eslint/no-unused-vars": "error",
-      "no-fallthrough": "off",
-      "default-case-last": "error",
+    js.configs.recommended,
+    ...tseslint.configs.recommendedTypeChecked,
+    {
+        files: ["**/*.ts", "**/*.tsx"],
+        // eslint-plugin-jsdoc and eslint-plugin-eslint-comments ship no type
+        // declarations, so their default exports resolve to `any`.
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- untyped plugin packages resolve to `any`
+        plugins: { jsdoc, "eslint-comments": eslintComments },
+        rules: {
+            // ── Power-of-10 / trust-boundary rules (CI-blocking) ──────────────
+            "@typescript-eslint/no-floating-promises": "error",
+            "@typescript-eslint/no-explicit-any": "error",
+            "@typescript-eslint/no-unused-vars": "error",
+            "no-fallthrough": "off",
+            "default-case-last": "error",
 
-      // ── Shape/complexity caps (CI-blocking) ───────────────────────────
-      "max-lines-per-function": [
-        "error",
-        { max: 60, skipBlankLines: true, skipComments: true },
-      ],
-      "max-depth": ["error", 3],
-      "max-params": ["error", 4],
-      complexity: ["error", 10],
-      "no-nested-ternary": "error",
+            // ── Shape/complexity caps (CI-blocking) ───────────────────────────
+            "max-lines-per-function": [
+                "error",
+                { max: 60, skipBlankLines: true, skipComments: true },
+            ],
+            "max-depth": ["error", 3],
+            "max-params": ["error", 4],
+            complexity: ["error", 10],
+            "no-nested-ternary": "error",
 
-      // ── Prologue enforcement (CI-blocking, gate scope) ────────────────
-      "jsdoc/require-jsdoc": [
-        "error",
-        {
-          publicOnly: true,
-          require: {
-            FunctionDeclaration: true,
-            MethodDefinition: true,
-            ClassDeclaration: true,
-          },
+            // ── Prologue enforcement (CI-blocking, gate scope) ────────────────
+            "jsdoc/require-jsdoc": [
+                "error",
+                {
+                    publicOnly: true,
+                    require: {
+                        FunctionDeclaration: true,
+                        MethodDefinition: true,
+                        ClassDeclaration: true,
+                    },
+                },
+            ],
+            "jsdoc/require-param": "error",
+            "jsdoc/require-param-description": "error",
+            "jsdoc/require-returns": "error",
+            "jsdoc/require-returns-description": "error",
+
+            // ── Deviation protocol: eslint-disable must be justified ──────────
+            "eslint-comments/require-description": ["error", { ignore: [] }],
+            "eslint-comments/no-unused-disable": "error",
         },
-      ],
-      "jsdoc/require-param": "error",
-      "jsdoc/require-param-description": "error",
-      "jsdoc/require-returns": "error",
-      "jsdoc/require-returns-description": "error",
-
-      // ── Deviation protocol: eslint-disable must be justified ──────────
-      "eslint-comments/require-description": ["error", { ignore: [] }],
-      "eslint-comments/no-unused-disable": "error",
     },
-  },
-  {
-    // Test files: relax the length/complexity caps (fixtures/setup blocks
-    // legitimately run long) but keep the trust-boundary + deviation rules.
-    files: ["tests/**/*.ts", "**/*.test.ts"],
-    rules: {
-      "max-lines-per-function": "off",
-      "jsdoc/require-jsdoc": "off",
+    {
+        // Test files: relax the length/complexity caps (fixtures/setup blocks
+        // legitimately run long) but keep the trust-boundary + deviation rules.
+        files: ["tests/**/*.ts", "**/*.test.ts"],
+        rules: {
+            "max-lines-per-function": "off",
+            "jsdoc/require-jsdoc": "off",
+        },
     },
-  },
 ];

@@ -32,23 +32,23 @@ import tseslint from "typescript-eslint";
 import { configs, relaxZones } from "@btrmnt/eslint-plugin-flightcode";
 
 export default tseslint.config(
-  {
-    ignores: ["node_modules/**", "dist/**", "eslint.config.js"],
-  },
-  ...configs.recommended,
-  {
-    files: ["**/*.ts", "**/*.tsx"],
-    languageOptions: {
-      parserOptions: {
-        projectService: true,
-        tsconfigRootDir: import.meta.dirname,
-      },
+    {
+        ignores: ["node_modules/**", "dist/**", "eslint.config.js"],
     },
-  },
-  // Relax specific zones AFTER configs.recommended:
-  relaxZones(["demo/**", "website/**"], {
-    "@typescript-eslint/no-explicit-any": "off",
-  }),
+    ...configs.recommended,
+    {
+        files: ["**/*.ts", "**/*.tsx"],
+        languageOptions: {
+            parserOptions: {
+                projectService: true,
+                tsconfigRootDir: import.meta.dirname,
+            },
+        },
+    },
+    // Relax specific zones AFTER configs.recommended:
+    relaxZones(["demo/**", "website/**"], {
+        "@typescript-eslint/no-explicit-any": "off",
+    }),
 );
 ```
 
@@ -65,9 +65,9 @@ column width — Prettier owns that):
 
 ```json
 {
-  "scripts": {
-    "check:flightcode": "eslint . --max-warnings 0 && prettier --check ."
-  }
+    "scripts": {
+        "check:flightcode": "eslint . --max-warnings 0 && prettier --check ."
+    }
 }
 ```
 
