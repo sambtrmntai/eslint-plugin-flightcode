@@ -2,7 +2,8 @@
 
 The canonical **FlightCode** eslint flat-config (the 10/3/4/60/80 house
 ruleset — see `docs/FLIGHTCODE.md` in `~/base` for the full standard) as a
-standalone, installable package. Ships:
+standalone, installable package. Authored in **TypeScript**, compiled to
+`dist/` via `tsc`. Ships:
 
 - `configs.recommended` — the strict canonical flat-config array (rules +
   plugins only, extracted verbatim from littleoak-cherry's proven
@@ -12,6 +13,11 @@ standalone, installable package. Ships:
 
 This package does **not** ship any custom AST rules yet (that's a later
 phase) and is not yet consumed by any repo — it's a standalone scaffold.
+
+`configs.recommended`'s cap rules are scoped to `**/*.ts`/`**/*.tsx` files —
+so this package's own source must be `.ts` for its dogfood gate (below) to
+actually mean anything (an earlier `.js` scaffold made this vacuous; fixed
+here).
 
 ## Consumer setup — the contract
 
@@ -54,18 +60,20 @@ Peer deps you must have installed: `eslint@^9.39.4`,
 Wire this as your own repo's `check:flightcode` script. It runs
 `configs.recommended` plus your `relaxZones(...)` block, where relaxed zones
 are `off` for the rules you haven't burned down yet (no bulk retrofit
-required):
+required), **plus** Prettier's 80-col width check (eslint does not enforce
+column width — Prettier owns that):
 
 ```json
 {
   "scripts": {
-    "check:flightcode": "eslint . --max-warnings 0"
+    "check:flightcode": "eslint . --max-warnings 0 && prettier --check ."
   }
 }
 ```
 
 with an `eslint.config.js` per the "Consumer setup" example above, adding
-your repo's `relaxZones(...)` call for any not-yet-compliant directories.
+your repo's `relaxZones(...)` call for any not-yet-compliant directories, and
+a `.prettierrc` with `"printWidth": 80`.
 
 ## Gate recipe 2 — changed-files lint (boy-scout, D8)
 
@@ -97,7 +105,11 @@ Pure, no side effects. Spread it into your config array **after**
 
 ```bash
 npm install
-npm test        # vitest
-npm run lint    # dogfoods configs.recommended on this package's own source
-npm run typecheck
+npm run build        # tsc: src/*.ts -> dist/ (.js + .d.ts)
+npm run typecheck    # tsc --noEmit over src + tests
+npm test             # vitest
+npm run lint         # dogfoods configs.recommended on this package's own .ts source
+                      # (build runs first — eslint.config.js imports ./dist/index.js)
+npm run format       # prettier --write . (printWidth 80)
+npm run format:check # prettier --check .
 ```

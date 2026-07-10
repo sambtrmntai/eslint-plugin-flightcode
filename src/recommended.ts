@@ -1,4 +1,4 @@
-// lib/recommended.js
+// src/recommended.ts
 //
 // The canonical FlightCode ruleset, extracted verbatim (rules + plugins only)
 // from littleoak-cherry's `eslint.config.js` (the 10/3/4/60/80 house
@@ -11,6 +11,7 @@ import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 import jsdoc from "eslint-plugin-jsdoc";
 import eslintComments from "eslint-plugin-eslint-comments";
+import type { Linter } from "eslint";
 
 /**
  * The strict canonical FlightCode flat-config array.
@@ -19,10 +20,8 @@ import eslintComments from "eslint-plugin-eslint-comments";
  * `languageOptions` (parserOptions.projectService, tsconfigRootDir) and
  * `ignores` block, since those are repo-specific and out of scope for a
  * shared package. See README.md for the full consumer-setup recipe.
- *
- * @type {import("eslint").Linter.Config[]}
  */
-export const recommended = [
+export const recommended: Linter.Config[] = [
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   {
