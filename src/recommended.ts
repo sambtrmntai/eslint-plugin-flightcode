@@ -12,6 +12,7 @@ import tseslint from "typescript-eslint";
 import jsdoc from "eslint-plugin-jsdoc";
 import eslintComments from "eslint-plugin-eslint-comments";
 import type { Linter } from "eslint";
+import { rules as flightcodeRules } from "./rules/index.js";
 
 /**
  * The strict canonical FlightCode flat-config array.
@@ -27,11 +28,21 @@ export const recommended: Linter.Config[] = [
     {
         files: ["**/*.ts", "**/*.tsx"],
         // eslint-plugin-jsdoc and eslint-plugin-eslint-comments ship no type
-        // declarations, so their default exports resolve to `any`.
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- untyped plugin packages resolve to `any`
-        plugins: { jsdoc, "eslint-comments": eslintComments },
+        // declarations, so their default exports resolve to `any`; and
+        // typescript-eslint's `RuleModule` isn't structurally identical to
+        // eslint core's `Linter.Plugin` rule shape (different `RuleContext`
+        // generics), so the flightcode entry needs a bridging cast.
+        /* eslint-disable @typescript-eslint/no-unsafe-assignment -- untyped plugin packages resolve to `any`; flightcode rules bridge typescript-eslint RuleModule to eslint core Linter.Plugin shape */
+        plugins: {
+            jsdoc,
+            "eslint-comments": eslintComments,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- bridges typescript-eslint RuleModule to eslint core Linter.Plugin shape
+            flightcode: { rules: flightcodeRules } as any,
+        },
+        /* eslint-enable @typescript-eslint/no-unsafe-assignment -- end of untyped-plugin bridge block */
         rules: {
             // ── Power-of-10 / trust-boundary rules (CI-blocking) ──────────────
+            "flightcode/bounded-loop-requires-cap": "error",
             "@typescript-eslint/no-floating-promises": "error",
             "@typescript-eslint/no-explicit-any": "error",
             "@typescript-eslint/no-unused-vars": "error",
