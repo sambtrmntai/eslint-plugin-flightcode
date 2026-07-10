@@ -43,6 +43,14 @@ export const recommended: Linter.Config[] = [
         rules: {
             // ── Power-of-10 / trust-boundary rules (CI-blocking) ──────────────
             "flightcode/bounded-loop-requires-cap": "error",
+            // FP-gated at "warn", not "error": an FP scan against highland
+            // (staff/**, demo/**, lib/**) flagged 67 sites, 45 of them
+            // (67%) in *.test.ts files asserting on JSON strings the test
+            // itself produced (e.g. a mocked DB write's own params) — not a
+            // real untrusted-input trust-boundary crossing. See
+            // docs/rules/no-bare-json-parse.md "Shipped at warn" for the
+            // full FP report and the path back to `error`.
+            "flightcode/no-bare-json-parse": "warn",
             "@typescript-eslint/no-floating-promises": "error",
             "@typescript-eslint/no-explicit-any": "error",
             "@typescript-eslint/no-unused-vars": "error",
