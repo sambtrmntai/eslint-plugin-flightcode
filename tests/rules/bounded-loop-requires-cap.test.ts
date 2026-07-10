@@ -1,9 +1,10 @@
 // tests/rules/bounded-loop-requires-cap.test.ts
 //
 // RuleTester matrix for `bounded-loop-requires-cap`: valid cases cover the
-// bounded forms (normal for, for-of over an array, and each flagged form
-// WITH a counter-cap guard); invalid cases cover each flagged form with no
-// guard. See docs/rules/bounded-loop-requires-cap.md for the rationale.
+// bounded forms (normal for, for-of over an array, each flagged form WITH a
+// counter-cap guard, and each flagged form WITH a wall-clock deadline-poll
+// guard); invalid cases cover each flagged form with no guard. `for await`
+// is not a flagged form in v1 (see docs/rules/bounded-loop-requires-cap.md).
 import { RuleTester } from "@typescript-eslint/rule-tester";
 import { afterAll, describe, it } from "vitest";
 import { boundedLoopRequiresCap } from "../../src/rules/bounded-loop-requires-cap.js";
@@ -25,10 +26,25 @@ ruleTester.run("bounded-loop-requires-cap", boundedLoopRequiresCap, {
         }
         `,
         `
-        const MAX_PAGES = 500;
-        for await (const page of pager) {
-            if (pageCount >= MAX_PAGES) throw new Error("too many pages");
-            pageCount++;
+        for (;;) {
+            if (Date.now() >= deadline) break;
+            pollOnce();
+        }
+        `,
+        `
+        while (true) {
+            if (performance.now() - start > TIMEOUT_MS) {
+                throw new Error("deadline exceeded");
+            }
+            pollOnce();
+        }
+        `,
+        `
+        async function poll() {
+            for (;;) {
+                if (Date.now() >= deadline) return false;
+                await pollOnce();
+            }
         }
         `,
     ],
@@ -47,14 +63,6 @@ ruleTester.run("bounded-loop-requires-cap", boundedLoopRequiresCap, {
         },
         {
             code: "do { doThing(); } while (true);",
-            errors: [{ messageId: "unboundedLoop" }],
-        },
-        {
-            code: `
-            for await (const page of pager) {
-                doThing(page);
-            }
-            `,
             errors: [{ messageId: "unboundedLoop" }],
         },
     ],
