@@ -10,9 +10,12 @@ standalone, installable package. Authored in **TypeScript**, compiled to
   `eslint.config.js`).
 - `relaxZones(globs, ruleOverrides)` — a tiny pure helper for carving out
   relaxed zones (demo/website/scripts/tests/mocks) in a consumer repo.
+- One custom AST rule so far (Phase 2b proof), registered under the
+  `flightcode` plugin key and enabled in `configs.recommended`:
+    - [`flightcode/bounded-loop-requires-cap`](docs/rules/bounded-loop-requires-cap.md)
+      — Power-of-10 Rule 2 (bounded loops).
 
-This package does **not** ship any custom AST rules yet (that's a later
-phase) and is not yet consumed by any repo — it's a standalone scaffold.
+This package is not yet consumed by any repo — it's a standalone scaffold.
 
 `configs.recommended`'s cap rules are scoped to `**/*.ts`/`**/*.tsx` files —
 so this package's own source must be `.ts` for its dogfood gate (below) to

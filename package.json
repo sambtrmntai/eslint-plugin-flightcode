@@ -23,14 +23,16 @@
     },
     "dependencies": {
         "@eslint/js": "^9.39.4",
-        "eslint-plugin-jsdoc": "^63.0.10",
+        "@typescript-eslint/utils": "^8.63.0",
         "eslint-plugin-eslint-comments": "^3.2.0",
+        "eslint-plugin-jsdoc": "^63.0.10",
         "typescript-eslint": "^8.62.1"
     },
     "devDependencies": {
+        "@typescript-eslint/rule-tester": "^8.63.0",
         "eslint": "^9.39.4",
+        "prettier": "^3.3.3",
         "typescript": "^5.4.5",
-        "vitest": "^1.6.0",
-        "prettier": "^3.3.3"
+        "vitest": "^1.6.0"
     }
 }
