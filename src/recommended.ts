@@ -43,6 +43,13 @@ export const recommended: Linter.Config[] = [
         rules: {
             // ── Power-of-10 / trust-boundary rules (CI-blocking) ──────────────
             "flightcode/bounded-loop-requires-cap": "error",
+            // Shipped at "error" on product code. An FP scan against highland
+            // found ~0% FP in non-test files (22 real unguarded parses of
+            // untrusted input) — the only FP mass (45 sites) was in *.test.ts
+            // parsing strings the test itself produced, which is NOT a runtime
+            // trust boundary. Those are carved out in the test block below, so
+            // this ships as an honest "error" on production code.
+            "flightcode/no-bare-json-parse": "error",
             "@typescript-eslint/no-floating-promises": "error",
             "@typescript-eslint/no-explicit-any": "error",
             "@typescript-eslint/no-unused-vars": "error",
@@ -88,6 +95,10 @@ export const recommended: Linter.Config[] = [
         rules: {
             "max-lines-per-function": "off",
             "jsdoc/require-jsdoc": "off",
+            // Carve-out: JSON.parse in a test typically parses a string the
+            // test itself produced (round-trip assertions) — not the runtime
+            // untrusted-input boundary the rule guards. Not a hazard here.
+            "flightcode/no-bare-json-parse": "off",
         },
     },
 ];
