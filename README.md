@@ -1,8 +1,11 @@
 # @btrmnt/eslint-plugin-flightcode
 
 The canonical **FlightCode** eslint flat-config (the 10/3/4/60/80 house
-ruleset — see `docs/FLIGHTCODE.md` in `~/base` for the full standard) as a
-standalone, installable package. Authored in **TypeScript**, compiled to
+ruleset) as a standalone, installable package. **The standard itself lives
+here too — [`docs/FLIGHTCODE.md`](docs/FLIGHTCODE.md)** — so the prose and the
+enforcement version together. That doc also carries a
+"where each piece of FlightCode lives" map; read it before concluding a piece
+is missing. Authored in **TypeScript**, compiled to
 `dist/` via `tsc`. Ships:
 
 - `configs.recommended` — the strict canonical flat-config array (rules +
@@ -17,7 +20,10 @@ standalone, installable package. Authored in **TypeScript**, compiled to
     - [`flightcode/no-bare-json-parse`](docs/rules/no-bare-json-parse.md)
       — Power-of-10 Rule 5 (trust boundary / crash containment).
 
-This package is not yet consumed by any repo — it's a standalone scaffold.
+**Consumed in production.** `littleoak-cherry` and `highland` both pin
+`v0.0.2` on `main`. (An earlier version of this line said the package was an
+unconsumed scaffold; that stopped being true when PR #24 and PR #126 merged on
+2026-07-13.)
 
 `configs.recommended`'s cap rules are scoped to `**/*.ts`/`**/*.tsx` files —
 so this package's own source must be `.ts` for its dogfood gate (below) to
