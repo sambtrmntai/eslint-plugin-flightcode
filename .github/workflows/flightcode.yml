@@ -1,0 +1,24 @@
+# FlightCode gate — blocking. This repo is declared `full-gate` in
+# ~/base/.claude/flightcode-status.json, and a full-gate declaration means CI
+# blocks the merge. Until this workflow existed the declaration was aspirational
+# and the registry carried `gateWired: false` to say so.
+#
+# FlightCode's own implementation must be gated by FlightCode.
+name: flightcode
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+
+jobs:
+    gate:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: "22"
+            - run: npm ci
+            # strict: --max-warnings 0, so a warning fails the build like an error
+            - run: npm run check:flightcode:strict
