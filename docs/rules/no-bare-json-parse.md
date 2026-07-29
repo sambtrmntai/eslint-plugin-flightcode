@@ -5,6 +5,12 @@ Power-of-10 Rule 5 (trust boundary / crash containment). Requires
 `try` block — an uncaught `SyntaxError` from a malformed parse crashes the
 boundary it runs in.
 
+**Binds.** Product code in every `.ts` / `.tsx` file in a repo whose eslint
+config extends `configs.recommended`, at `error`. **Exception:** test files,
+where the rule ships `off` — the only false-positive mass is the test-only
+"parse-then-assert on self-produced JSON" pattern, which is not a runtime
+hazard.
+
 ## What it flags
 
 A `CallExpression` whose callee is `JSON.parse` (a non-computed

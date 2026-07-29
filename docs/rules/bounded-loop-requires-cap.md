@@ -5,6 +5,10 @@ cap on loop forms that are **unbounded by construction** — not on ordinary
 counted or collection loops, which are already provably bounded by their
 own syntax.
 
+**Binds.** Every `.ts` / `.tsx` file in a repo whose eslint config extends
+`configs.recommended`. **Exception:** none — the rule has no test-only
+carve-out, unlike `no-bare-json-parse`.
+
 ## What it flags
 
 Exactly these three forms, and only when the loop body has no cap guard
@@ -109,12 +113,14 @@ for (;;) {
 }
 ```
 
-Detection is intentionally syntactic and shallow (top-level `if` statements
-of the loop body only) — the bias is toward treating an ambiguous or
-non-standard guard shape as satisfied (false negative) rather than flagging
-it (false positive), per the FlightCode p-hacking guardrail: a brittle rule
-at `error` generates justified-disables that erode the waiver budget, which
-is worse than an occasional missed unbounded loop.
+Detection is intentionally syntactic and shallow — top-level `if` statements
+of the loop body only. The bias is toward treating an ambiguous or
+non-standard guard shape as satisfied (a false negative) rather than flagging
+it (a false positive).
+
+> **Why that direction.** Per the FlightCode p-hacking guardrail, a brittle
+> rule at `error` generates justified-disables that erode the waiver budget.
+> That is worse than an occasional missed unbounded loop.
 
 ## Deferred: `for await`
 

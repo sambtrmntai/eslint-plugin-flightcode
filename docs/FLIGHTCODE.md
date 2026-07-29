@@ -31,7 +31,8 @@ concluding a piece is missing.
 > complexity caps, boundary assertions, generic-at-the-seam). NOT the evidence gate (Pillar A)
 > or the zero-knowledge docs (Pillar B), which are separate systems that reference it.
 > Locked house values + enforcement: each adopting repo's own
-> `docs/DOC-STANDARD.md` + `eslint.config.js` + `check:flightcode` gate + CI
+> `<repo>/docs/DOC-STANDARD.md` + `<repo>/eslint.config.js` + that repo's
+> `check:flightcode` gate + CI
 > (first: littleoak-cherry).
 > (Formerly "Disciplined Code Principles"; old filename kept as a pointer stub.)
 
@@ -41,7 +42,7 @@ concluding a piece is missing.
 > adapted to a modern codebase (e.g. the TypeScript **littleoak / Cherry** project).
 >
 > **Who this binds.** Every session writing code in a repo declared `full-gate` or
-> `touched-only` in `.claude/flightcode-status.json`. Read `FLIGHTCODE_STATUS.md` for the
+> `touched-only` in `.claude/flightcode-status.json`. Read `~/base/docs/FLIGHTCODE_STATUS.md` for the
 > repo's status before writing code. **Exception:** repos declared `none`, plus the file-level
 > exclusions in `~/.claude/CLAUDE.md` (generated, vendored, config and data files).
 >
@@ -65,7 +66,7 @@ FlightCode is **versioned**, and the version _is_ the version of the shared enfo
   re-runs `check:flightcode`. So evolving the standard **never rewrites the past** — existing repos
   are untouched until they choose to move.
 - **New repos default to the newest version** — onboarding pins the latest published tag (see
-  `FLIGHTCODE_STATUS.md` → "Onboarding a new repo"). So new code gets the current standard for free;
+  `~/base/docs/FLIGHTCODE_STATUS.md` → "Onboarding a new repo"). So new code gets the current standard for free;
   old code isn't force-migrated.
 - **Each full-gate repo's pinned version is recorded** in `.claude/flightcode-status.json`
   (`flightcodeVersion`), so the registry shows who's on what.
