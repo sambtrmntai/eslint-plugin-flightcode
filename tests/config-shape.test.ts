@@ -8,23 +8,137 @@ import type { Linter } from "eslint";
 import { configs, relaxZones } from "../src/index.js";
 
 /**
- * Find the flat-config block within `configs.recommended` that declares the
- * given rule, searching every block's `rules` object.
+ * Find the effective value of a rule for production (non-test) files in
+ * `configs.recommended`, mirroring ESLint flat-config layering: later
+ * blocks override earlier ones. Walks the array from the END, skipping the
+ * test-only relax block (`tests/**` / `*.test.ts`), so a rule the preset
+ * sets one way and the curated block overrides is resolved to the curated
+ * (later, more specific) value rather than the test-file relax value.
  *
  * @param configArray - The flat-config array to search.
  * @param ruleName - The rule id to look for (e.g. "max-depth").
- * @returns The rule's configured value, or `undefined` if absent.
+ * @returns The rule's effective configured value, or `undefined` if absent.
  */
 function findRuleValue(
     configArray: Linter.Config[],
     ruleName: string,
 ): unknown {
-    for (const block of configArray) {
+    for (let i = configArray.length - 1; i >= 0; i -= 1) {
+        const block = configArray[i];
+        const isTestOnlyBlock =
+            Array.isArray(block.files) && block.files.includes("**/*.test.ts");
+        if (isTestOnlyBlock) {
+            continue;
+        }
         if (block.rules && ruleName in block.rules) {
             return block.rules[ruleName];
         }
     }
     return undefined;
+}
+
+/**
+ * Assert the canonical shape/complexity caps (complexity, max-depth,
+ * max-params, max-lines-per-function) match their FlightCode values.
+ *
+ * @returns Nothing; throws via `expect` on mismatch.
+ */
+function assertShapeCaps(): void {
+    expect(findRuleValue(configs.recommended, "complexity")).toEqual([
+        "error",
+        10,
+    ]);
+    expect(findRuleValue(configs.recommended, "max-depth")).toEqual([
+        "error",
+        3,
+    ]);
+    expect(findRuleValue(configs.recommended, "max-params")).toEqual([
+        "error",
+        4,
+    ]);
+    expect(
+        findRuleValue(configs.recommended, "max-lines-per-function"),
+    ).toEqual(["error", { max: 60, skipBlankLines: true, skipComments: true }]);
+}
+
+/**
+ * Assert the long-standing trust-boundary rules are set to "error".
+ *
+ * @returns Nothing; throws via `expect` on mismatch.
+ */
+function assertTrustBoundaryRules(): void {
+    expect(
+        findRuleValue(
+            configs.recommended,
+            "@typescript-eslint/no-floating-promises",
+        ),
+    ).toBe("error");
+    expect(
+        findRuleValue(
+            configs.recommended,
+            "@typescript-eslint/no-explicit-any",
+        ),
+    ).toBe("error");
+    expect(
+        findRuleValue(configs.recommended, "@typescript-eslint/no-unused-vars"),
+    ).toBe("error");
+    expect(findRuleValue(configs.recommended, "no-nested-ternary")).toBe(
+        "error",
+    );
+}
+
+/**
+ * Assert the Tier 1 `no-unsafe-*` trust-boundary rules are all "error".
+ *
+ * @returns Nothing; throws via `expect` on mismatch.
+ */
+function assertTier1UnsafeRules(): void {
+    const rules = [
+        "@typescript-eslint/no-unsafe-assignment",
+        "@typescript-eslint/no-unsafe-call",
+        "@typescript-eslint/no-unsafe-member-access",
+        "@typescript-eslint/no-unsafe-return",
+        "@typescript-eslint/no-unsafe-argument",
+    ];
+    for (const rule of rules) {
+        expect(findRuleValue(configs.recommended, rule)).toBe("error");
+    }
+}
+
+/**
+ * Assert the jsdoc prologue-enforcement rules carry their expected options.
+ *
+ * @returns Nothing; throws via `expect` on mismatch.
+ */
+function assertJsdocPrologueRules(): void {
+    expect(findRuleValue(configs.recommended, "jsdoc/require-jsdoc")).toEqual([
+        "error",
+        {
+            publicOnly: true,
+            require: {
+                FunctionDeclaration: true,
+                MethodDefinition: true,
+                ClassDeclaration: true,
+            },
+        },
+    ]);
+}
+
+/**
+ * Assert the eslint-comments deviation-protocol rules are set as expected.
+ *
+ * @returns Nothing; throws via `expect` on mismatch.
+ */
+function assertDeviationRules(): void {
+    expect(
+        findRuleValue(
+            configs.recommended,
+            "eslint-comments/require-description",
+        ),
+    ).toEqual(["error", { ignore: [] }]);
+    expect(
+        findRuleValue(configs.recommended, "eslint-comments/no-unused-disable"),
+    ).toBe("error");
 }
 
 describe("configs.recommended", () => {
@@ -34,79 +148,32 @@ describe("configs.recommended", () => {
     });
 
     it("carries the canonical shape/complexity caps", () => {
-        expect(findRuleValue(configs.recommended, "complexity")).toEqual([
-            "error",
-            10,
-        ]);
-        expect(findRuleValue(configs.recommended, "max-depth")).toEqual([
-            "error",
-            3,
-        ]);
-        expect(findRuleValue(configs.recommended, "max-params")).toEqual([
-            "error",
-            4,
-        ]);
-        expect(
-            findRuleValue(configs.recommended, "max-lines-per-function"),
-        ).toEqual([
-            "error",
-            { max: 60, skipBlankLines: true, skipComments: true },
-        ]);
+        assertShapeCaps();
     });
 
     it("carries the trust-boundary rules at error level", () => {
+        assertTrustBoundaryRules();
+    });
+
+    it("carries the Tier 1 trust-boundary no-unsafe-* rules at error level", () => {
+        assertTier1UnsafeRules();
+    });
+
+    it("rejects require-await as Tier 3 (off)", () => {
         expect(
             findRuleValue(
                 configs.recommended,
-                "@typescript-eslint/no-floating-promises",
+                "@typescript-eslint/require-await",
             ),
-        ).toBe("error");
-        expect(
-            findRuleValue(
-                configs.recommended,
-                "@typescript-eslint/no-explicit-any",
-            ),
-        ).toBe("error");
-        expect(
-            findRuleValue(
-                configs.recommended,
-                "@typescript-eslint/no-unused-vars",
-            ),
-        ).toBe("error");
-        expect(findRuleValue(configs.recommended, "no-nested-ternary")).toBe(
-            "error",
-        );
+        ).toBe("off");
     });
 
     it("carries the jsdoc prologue rules", () => {
-        expect(
-            findRuleValue(configs.recommended, "jsdoc/require-jsdoc"),
-        ).toEqual([
-            "error",
-            {
-                publicOnly: true,
-                require: {
-                    FunctionDeclaration: true,
-                    MethodDefinition: true,
-                    ClassDeclaration: true,
-                },
-            },
-        ]);
+        assertJsdocPrologueRules();
     });
 
     it("carries the eslint-comments deviation rules", () => {
-        expect(
-            findRuleValue(
-                configs.recommended,
-                "eslint-comments/require-description",
-            ),
-        ).toEqual(["error", { ignore: [] }]);
-        expect(
-            findRuleValue(
-                configs.recommended,
-                "eslint-comments/no-unused-disable",
-            ),
-        ).toBe("error");
+        assertDeviationRules();
     });
 
     it("relaxes max-lines-per-function and require-jsdoc for test files", () => {

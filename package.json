@@ -1,6 +1,6 @@
 {
     "name": "@btrmnt/eslint-plugin-flightcode",
-    "version": "0.0.2",
+    "version": "0.1.0",
     "type": "module",
     "description": "Canonical FlightCode eslint flat-config (configs.recommended) + relaxZones() helper + Power-of-10 custom rules.",
     "main": "./dist/index.js",
