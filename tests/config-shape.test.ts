@@ -289,6 +289,6 @@ describe("relaxZones()", () => {
             relaxZones(["demo/**", "scripts/build.ts", "website/**"], {
                 "no-console": "off",
             }),
-        ).toThrow(/"demo\/\*\*", "website\/\*\*" are not a literal path/);
+        ).toThrow(/"demo\/\*\*", "website\/\*\*" are not literal paths/);
     });
 });

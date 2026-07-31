@@ -66,9 +66,10 @@ function findNonLiteralPaths(paths: unknown[]): string[] {
  */
 function buildNonLiteralPathErrorMessage(offenders: string[]): string {
     const quoted = offenders.join(", ");
-    const verb = offenders.length > 1 ? "are" : "is";
+    const many = offenders.length > 1;
+    const subject = many ? "are not literal paths" : "is not a literal path";
     return (
-        `relaxZones: ${quoted} ${verb} not a literal path — a path zone ` +
+        `relaxZones: ${quoted} ${subject} — a path zone ` +
         `must be an explicit file list so a new file cannot enter it ` +
         `without showing up in a diff. List each file explicitly. For a ` +
         `file-TYPE exemption (e.g. all *.cli.ts), use a plain flat-config ` +
