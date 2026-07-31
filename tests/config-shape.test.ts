@@ -8,10 +8,32 @@ import type { Linter } from "eslint";
 import { configs, relaxZones } from "../src/index.js";
 
 /**
+ * Detect whether a flat-config block is scoped to test files, without
+ * relying on an exact-string match against one specific glob spelling. A
+ * block counts as test-scoped if it declares a `files` array and every
+ * entry in it mentions "test" (case-insensitively) — covering spellings
+ * like `tests/**`, `**\/*.test.ts`, `**\/__tests__/**`, etc. A future
+ * rename of the test-relax block's glob still gets caught by this, instead
+ * of silently falling through to a wrong "effective value" result.
+ *
+ * @param block - The flat-config block to inspect.
+ * @returns True if every `files` entry looks test-scoped; false otherwise
+ *   (including when `files` is absent, since that block applies broadly).
+ */
+function isTestScopedBlock(block: Linter.Config): boolean {
+    if (!Array.isArray(block.files) || block.files.length === 0) {
+        return false;
+    }
+    return block.files.every(
+        (glob) => typeof glob === "string" && /test/i.test(glob),
+    );
+}
+
+/**
  * Find the effective value of a rule for production (non-test) files in
  * `configs.recommended`, mirroring ESLint flat-config layering: later
- * blocks override earlier ones. Walks the array from the END, skipping the
- * test-only relax block (`tests/**` / `*.test.ts`), so a rule the preset
+ * blocks override earlier ones. Walks the array from the END, skipping any
+ * test-scoped relax block (see `isTestScopedBlock`), so a rule the preset
  * sets one way and the curated block overrides is resolved to the curated
  * (later, more specific) value rather than the test-file relax value.
  *
@@ -25,9 +47,7 @@ function findRuleValue(
 ): unknown {
     for (let i = configArray.length - 1; i >= 0; i -= 1) {
         const block = configArray[i];
-        const isTestOnlyBlock =
-            Array.isArray(block.files) && block.files.includes("**/*.test.ts");
-        if (isTestOnlyBlock) {
+        if (isTestScopedBlock(block)) {
             continue;
         }
         if (block.rules && ruleName in block.rules) {
@@ -197,43 +217,71 @@ describe("configs.recommended", () => {
 });
 
 describe("relaxZones()", () => {
-    it("returns a single override block with the given globs and rules", () => {
-        expect(relaxZones(["demo/*.ts"], { "no-console": "off" })).toEqual({
-            files: ["demo/*.ts"],
+    it("returns a single override block for an explicit file list", () => {
+        const files = ["demo/a.ts", "demo/b.ts"];
+        expect(relaxZones(files, { "no-console": "off" })).toEqual({
+            files,
             rules: { "no-console": "off" },
         });
     });
 
-    it("accepts an explicit file list", () => {
-        const globs = ["scripts/build.ts", "scripts/deploy.ts"];
-        expect(relaxZones(globs, { "no-console": "off" })).toEqual({
-            files: globs,
+    it("accepts a multi-file explicit list", () => {
+        const files = ["scripts/build.ts", "scripts/deploy.ts"];
+        expect(relaxZones(files, { "no-console": "off" })).toEqual({
+            files,
             rules: { "no-console": "off" },
         });
     });
 
     it("is pure — same inputs produce equal (not identical) output", () => {
-        const globs = ["scripts/*.ts"];
+        const files = ["scripts/build.ts"];
         const rules: Linter.RulesRecord = { "no-console": "warn" };
-        const first = relaxZones(globs, rules);
-        const second = relaxZones(globs, rules);
+        const first = relaxZones(files, rules);
+        const second = relaxZones(files, rules);
         expect(first).toEqual(second);
         expect(first).not.toBe(second);
     });
 
-    it("rejects a single recursive glob, naming it and the fix", () => {
-        expect(() => relaxZones(["demo/**"], { "no-console": "off" })).toThrow(
-            'relaxZones: recursive glob "demo/**" is not allowed — a path ' +
-                "zone must not silently swallow new files. Use a " +
-                'non-recursive glob ("demo/*.ts") or an explicit file ' +
-                'list. See FLIGHTCODE.md "Exemption hierarchy".',
+    it("rejects a non-recursive glob — a glob still swallows new files", () => {
+        // Removing the metacharacter check would let this call through,
+        // since "demo/*.ts" is not a recursive "**" glob — that is exactly
+        // the gap this predicate closes.
+        expect(() =>
+            relaxZones(["demo/*.ts"], { "no-console": "off" }),
+        ).toThrow(
+            'relaxZones: "demo/*.ts" is not a literal path — a path zone ' +
+                "must be an explicit file list so a new file cannot enter " +
+                "it without showing up in a diff. List each file " +
+                "explicitly. For a file-TYPE exemption (e.g. all " +
+                "*.cli.ts), use a plain flat-config block instead — see " +
+                'FLIGHTCODE.md "Exemption hierarchy".',
         );
     });
 
-    it("rejects a recursive glob with an interior segment", () => {
+    it("rejects a recursive glob", () => {
+        // Removing the metacharacter check entirely would let this call
+        // through; this is the same failure mode the prior "**"-only
+        // predicate covered, now subsumed by the literal-path check.
+        expect(() => relaxZones(["demo/**"], { "no-console": "off" })).toThrow(
+            /"demo\/\*\*" is not a literal path/,
+        );
+    });
+
+    it("rejects a file-type glob — that belongs in a plain flat-config block", () => {
         expect(() =>
-            relaxZones(["**/scripts/**"], { "no-console": "off" }),
-        ).toThrow(/recursive glob "\*\*\/scripts\/\*\*" is not allowed/);
+            relaxZones(["**/*.cli.ts"], { "no-console": "off" }),
+        ).toThrow(/"\*\*\/\*\.cli\.ts" is not a literal path/);
+    });
+
+    it("rejects a non-string entry with the actionable message, not a raw TypeError", () => {
+        // Without the isLiteralPath type guard this would throw
+        // `TypeError: entry.includes is not a function` instead.
+        expect(() =>
+            // @ts-expect-error -- deliberately testing runtime rejection of
+            // a non-string entry; relaxZones's type signature disallows
+            // this at compile time, but a JS consumer isn't type-checked.
+            relaxZones([123], { "no-console": "off" }),
+        ).toThrow(/123 is not a literal path/);
     });
 
     it("reports every offender in a mixed array, not just the first", () => {
@@ -241,6 +289,6 @@ describe("relaxZones()", () => {
             relaxZones(["demo/**", "scripts/build.ts", "website/**"], {
                 "no-console": "off",
             }),
-        ).toThrow(/"demo\/\*\*", "website\/\*\*"/);
+        ).toThrow(/"demo\/\*\*", "website\/\*\*" are not a literal path/);
     });
 });
