@@ -56,6 +56,24 @@ export const recommended: Linter.Config[] = [
             "no-fallthrough": "off",
             "default-case-last": "error",
 
+            // ── Tier 1 — trust-boundary rules (Pillar 1 / Power-of-10 rule 7)
+            // Already "error" via recommendedTypeChecked; named here so they
+            // are normative-by-declaration, not just inherited-by-accident.
+            "@typescript-eslint/no-unsafe-assignment": "error",
+            "@typescript-eslint/no-unsafe-call": "error",
+            "@typescript-eslint/no-unsafe-member-access": "error",
+            "@typescript-eslint/no-unsafe-return": "error",
+            "@typescript-eslint/no-unsafe-argument": "error",
+
+            // ── Tier 3 — REJECTED (see FLIGHTCODE.md "Rule tiers") ──
+            // require-await fires only when a function has ZERO awaits, so
+            // it cannot see a forgotten `await` in a function that awaits
+            // anything else — that is no-floating-promises' job (Tier 1
+            // above). Its dominant violation class is interface-conforming
+            // stubs whose Promise return is load-bearing, i.e. conformance,
+            // not defects. Fails admission tests 2 and 3.
+            "@typescript-eslint/require-await": "off",
+
             // ── Shape/complexity caps (CI-blocking) ───────────────────────────
             "max-lines-per-function": [
                 "error",

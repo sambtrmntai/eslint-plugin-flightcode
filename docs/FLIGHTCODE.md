@@ -11,15 +11,17 @@
 Recorded because it took real effort to rediscover, twice. Read this before
 concluding a piece is missing.
 
-| Piece                            | Where                                                                                                                | Why there                                                                                                                                          |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **The standard** (this doc)      | `eslint-plugin-flightcode/docs/FLIGHTCODE.md`                                                                        | Versions in lockstep with the package that enforces it.                                                                                            |
-| **The enforcement**              | `eslint-plugin-flightcode` — `configs.recommended`, `relaxZones()`, custom AST rules                                 | Distributed as a public git-tag dep; a repo pins a tag, and the pin is the freeze.                                                                 |
-| **Per-repo adoption status**     | `~/base/.claude/flightcode-status.json` (machine, authoritative) + `~/base/docs/FLIGHTCODE_STATUS.md` (human mirror) | **Stays private and stays at that exact path** — the PostToolUse hook reads the JSON there, and the registry names client repos.                   |
-| **Write-time enforcement**       | `~/base/.claude/hooks/check-flightcode.py`                                                                           | Reads the registry directly; warns on touched-code violations before CI ever runs.                                                                 |
-| **Per-repo concrete companions** | `highland/docs/DOC-STANDARD.md`, `littleoak-cherry/docs/DOC-STANDARD.md`                                             | Deliberately repo-specific: locked local values, gate-vs-census scope, house prologue shapes. **Not** canonical, and not duplicates of each other. |
-| **Rule docs**                    | `eslint-plugin-flightcode/docs/rules/*.md`                                                                           | One per custom AST rule.                                                                                                                           |
-| **Historical bundle**            | `~/base/handoffs/flightcode-complete/` (snapshot, 2026-07-09)                                                        | A point-in-time export. **Treat as stale** — it predates the shared package landing and highland's caps being tightened.                           |
+| Piece                                    | Where                                                                                                                | Why there                                                                                                                                          |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **The standard** (this doc)              | `eslint-plugin-flightcode/docs/FLIGHTCODE.md`                                                                        | Versions in lockstep with the package that enforces it.                                                                                            |
+| **The enforcement**                      | `eslint-plugin-flightcode` — `configs.recommended`, `relaxZones()`, custom AST rules                                 | Distributed as a public git-tag dep; a repo pins a tag, and the pin is the freeze.                                                                 |
+| **Per-repo adoption status**             | `~/base/.claude/flightcode-status.json` (machine, authoritative) + `~/base/docs/FLIGHTCODE_STATUS.md` (human mirror) | **Stays private and stays at that exact path** — the PostToolUse hook reads the JSON there, and the registry names client repos.                   |
+| **Write-time enforcement**               | `~/base/.claude/hooks/check-flightcode.py`                                                                           | Reads the registry directly; warns on touched-code violations before CI ever runs.                                                                 |
+| **Per-repo concrete companions**         | `highland/docs/DOC-STANDARD.md`, `littleoak-cherry/docs/DOC-STANDARD.md`                                             | Deliberately repo-specific: locked local values, gate-vs-census scope, house prologue shapes. **Not** canonical, and not duplicates of each other. |
+| **Rule docs**                            | `eslint-plugin-flightcode/docs/rules/*.md`                                                                           | One per custom AST rule.                                                                                                                           |
+| **Historical bundle**                    | `~/base/handoffs/flightcode-complete/` (snapshot, 2026-07-09)                                                        | A point-in-time export. **Treat as stale** — it predates the shared package landing and highland's caps being tightened.                           |
+| **Deviation/justified-disable protocol** | `~/.claude/CLAUDE.md` (global user instructions)                                                                     | Not yet mirrored here; the `-- <reason>` inline-disable protocol + single-digit budget currently only exist in that file.                          |
+| **Per-repo waiver registries**           | `<repo>/docs/FLIGHTCODE_WAIVERS.md` (one per adopting repo)                                                          | Repo-specific by design — see "Waiver-registry contract" above; not duplicated here.                                                               |
 
 > **The mistake this table prevents.** `littleoak-cherry/docs/DOC-STANDARD.md`
 > is its house standard, referenced by that repo's own `eslint.config.js` and by
@@ -58,10 +60,10 @@ FlightCode is **versioned**, and the version _is_ the version of the shared enfo
 [`@btrmnt/eslint-plugin-flightcode`](https://github.com/sambtrmntai/eslint-plugin-flightcode):
 
 - **The version = the package semver.** A **minor** bump adds/tightens a requirement (e.g. `0.0.x` →
-  `0.1.0` adds strict `max-len`). A **patch** bump is a non-normative fix (rule false-positive tuning,
-  a bug) that does **not** change what the standard requires.
+  `0.1.0` adds rule tiers + admission tests). A **patch** bump is a non-normative fix (rule
+  false-positive tuning, a bug) that does **not** change what the standard requires.
 - **A repo pins a version** by pinning the package git tag in its `package.json`
-  (`"@btrmnt/eslint-plugin-flightcode": "git+https://github.com/sambtrmntai/eslint-plugin-flightcode.git#v0.0.2"`). **The pin
+  (`"@btrmnt/eslint-plugin-flightcode": "git+https://github.com/sambtrmntai/eslint-plugin-flightcode.git#v0.1.0"`). **The pin
   is the freeze.** A repo stays on the version it pinned until it _deliberately_ bumps the tag and
   re-runs `check:flightcode`. So evolving the standard **never rewrites the past** — existing repos
   are untouched until they choose to move.
@@ -73,10 +75,11 @@ FlightCode is **versioned**, and the version _is_ the version of the shared enfo
 
 ### Version history
 
-| Version     | Status                     | What it requires (delta from previous)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| ----------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`0.0.2`** | **current** (tag `v0.0.2`) | The shared package: `configs.recommended` (caps 10/3/4/60, 80-col via Prettier `printWidth`, jsdoc prologue, `eslint-comments` deviation protocol) + `relaxZones()` helper + 4-space indent + custom rules `bounded-loop-requires-cap` (error) and `no-bare-json-parse` (error, test carve-out). **80-col is enforced on code _structure_ only** — string/template-literal and comment _content_ are exempt (Prettier can't split them without changing values); wrap those by judgment. _(Distributed as a public git-tag dep at `sambtrmntai/eslint-plugin-flightcode`; v0.0.2 = v0.0.1 + committed `dist/` and no `prepare` script — a packaging patch so tokenless git installs need no build-script allowlist. Standard requirements identical to 0.0.1.)_ |
-| **`0.1.0`** | planned (not built)        | Adds a strict `max-len` ESLint rule to close the 80-col gap on string/comment content. Deferred deliberately — scoped in `handoffs/highland/CJ/flightcode-handback/MAXLEN_ENFORCEMENT_SCOPE.md` (the cost is ~entirely hand-wrapping legit SQL/narration/comments; only worth it phased, per-repo burndown). Repos adopt it by bumping their pin to `v0.1.0` when ready.                                                                                                                                                                                                                                                                                                                                                                                        |
+| Version     | Status                     | What it requires (delta from previous)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ----------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **`0.0.2`** | superseded (tag `v0.0.2`)  | The shared package: `configs.recommended` (caps 10/3/4/60, 80-col via Prettier `printWidth`, jsdoc prologue, `eslint-comments` deviation protocol) + `relaxZones()` helper + 4-space indent + custom rules `bounded-loop-requires-cap` (error) and `no-bare-json-parse` (error, test carve-out). **80-col is enforced on code _structure_ only** — string/template-literal and comment _content_ are exempt (Prettier can't split them without changing values); wrap those by judgment. _(Distributed as a public git-tag dep at `sambtrmntai/eslint-plugin-flightcode`; v0.0.2 = v0.0.1 + committed `dist/` and no `prepare` script — a packaging patch so tokenless git installs need no build-script allowlist. Standard requirements identical to 0.0.1.)_                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **`0.1.0`** | **current** (tag `v0.1.0`) | Introduces rule tiers (Tier 1/2/3), the rule admission tests, and the exemption hierarchy + waiver-registry contract (see sections above), including the explicit-file-list rule for Tier-4 path zones (a zone must be a literal file list — no wildcards at all — so new files can't enter a relaxed area unnoticed). **⚠️ BREAKING:** `relaxZones()` now _enforces_ this — it throws at config-load time if any entry passed to it isn't a literal path (contains `*`, `?`, `[`, `]`, `{`, `}`, or `!`). A consumer whose `eslint.config.js` currently calls `relaxZones()` with any glob (recursive or not, e.g. `demo/**` or even `demo/*.ts`) will fail to load config the moment it bumps its pin to `v0.1.0`; the fix is to rewrite the zone as an explicit file list before bumping, or — for a genuine file-TYPE deviation like `*.cli.ts` — move it to a plain flat-config block instead of `relaxZones()`. No other repo is force-migrated — the pin is the freeze, so a repo stays on its current version until it deliberately moves. `@typescript-eslint/require-await` moves to Tier 3 (`"off"`, explicit rejection — was never curated, arrived only via `recommendedTypeChecked`; see "Rule admission tests" for the worked-example rationale). The five `@typescript-eslint/no-unsafe-*` rules move to Tier 1 (declarative only — already `"error"` via the preset, now also named in the curated block as Pillar 1 / Power-of-10 rule-7 trust-boundary rules; no behavior change). Strict `max-len` was scoped for this release but deliberately **deferred to `0.2.0`** (Sam, 2026-07-31) — highland alone would take ~33,309 hits, and it needs to run through the new admission tests first. |
+| **`0.2.0`** | planned (not built)        | Strict `max-len` ESLint rule to close the 80-col gap on string/comment content. Deferred from 0.1.0 deliberately — scoped in `handoffs/highland/CJ/flightcode-handback/MAXLEN_ENFORCEMENT_SCOPE.md` (the cost is ~entirely hand-wrapping legit SQL/narration/comments; only worth it phased, per-repo burndown, and only after admission-testing against the new Rule tiers framework). Repos adopt it by bumping their pin to `v0.2.0` when ready.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 ---
 
@@ -211,6 +214,134 @@ The 10 rules (Holzmann, JPL 2006):
 
 Rules 3, 8, 9 are C-memory-model artifacts — keep their _spirit_ (bound resource growth, avoid
 obscuring magic, avoid tangled aliasing), don't force a literal port.
+
+---
+
+## Rule admission tests
+
+A rule is normative FlightCode — belongs in the curated block of
+`configs.recommended` — only if it passes all three:
+
+1. **Traces to a pillar.** It advances strict-mode (Pillar 1), documentation
+   (Pillar 2), or Power-of-10 analyzability (Pillar 3). A rule that traces to
+   none of the three has no business being normative here.
+2. **Catches what it appears to catch.** The failure mode its name implies is
+   actually inside its detection set — not merely adjacent to it.
+3. **Its violations are defects, not conformance.** If the dominant violation
+   class in real code is correct-by-construction — code that is _right_ for
+   its own reasons, not broken — the rule is mis-specified for this codebase
+   family, whatever its name promises.
+
+**Worked example — `@typescript-eslint/require-await` fails (2) and (3).** It
+fires only when a function has zero `await` expressions in its body, so it
+structurally cannot flag a forgotten `await` in a function that awaits
+_something else_ — that gap is exactly what `no-floating-promises` (Tier 1)
+already covers, so `require-await` adds no detection `no-floating-promises`
+doesn't already provide (fails test 2). And in practice its dominant hit is
+an interface-conforming test double or stub whose `Promise` return type is
+load-bearing (it must satisfy an async interface) even though the body never
+awaits anything — in highland, 93% of its 1,882 hits were exactly this shape
+(fails test 3). See "Rule tiers" below for the disposition.
+
+---
+
+## Rule tiers
+
+`tseslint.configs.recommendedTypeChecked` is a starting point, not policy —
+that one spread in `src/recommended.ts` brings in 73 rules at once. Only the
+rules **named explicitly** in the curated block below it are normative
+FlightCode; everything else arrived along for the ride. Three tiers:
+
+| Tier              | Meaning                                                                                         | Changing it                                                                          |
+| ----------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| **1 — Normative** | Named explicitly in the curated block; traces to a pillar (passes all 3 admission tests).       | Standard decision + version bump.                                                    |
+| **2 — Inherited** | Arrives via `recommendedTypeChecked`; on by default, never individually reviewed.               | A repo may disable it with a logged waiver — this is **not** a FlightCode deviation. |
+| **3 — Rejected**  | Explicitly set to `"off"` in `configs.recommended`, with the rejection reason recorded in-line. | Standard decision + version bump.                                                    |
+
+This retroactively legitimises existing per-repo disables of _inherited_
+(Tier 2) rules: those were never deviations from the standard, because the
+standard never claimed those 73 rules as its own in the first place. A
+Tier-2 disable still needs a waiver-registry entry (below) — it's just not a
+FlightCode violation.
+
+---
+
+## Exemption hierarchy
+
+When code needs a carve-out from a normative rule, prefer options in this
+order — each step down is a bigger, longer-lived exemption and should be
+harder to reach for:
+
+1. **Fix the code.** No exemption. Always tried first.
+2. **Syntactic** — a rule option, or a custom rule keyed on code _shape_
+   (e.g. `flightcode/no-bare-json-parse`'s own detection logic).
+3. **File-type** — keyed on what the file _is_ (e.g. a `*.cli.ts` glob
+   override), written as a plain flat-config block (see
+   "`relaxZones()` is path-zone-only" below — it deliberately does not go
+   through the helper).
+4. **Path zone** — keyed on where the file _lives_, via `relaxZones()`.
+   Last resort; must carry a named retirement trigger — the condition under
+   which the zone is revisited and, ideally, removed. **A path zone must be
+   an explicit file list — no wildcards at all — and this is enforced, not
+   just documented.** `relaxZones()` throws at config-load time on any entry
+   that isn't a literal path (any entry containing a glob metacharacter:
+   `*`, `?`, `[`, `]`, `{`, `}`, `!`). This is deliberately stricter than
+   "no recursive glob": even a non-recursive glob like `demo/*.ts` still
+   lets a new `.ts` file dropped straight into `demo/` enter the relaxed
+   zone with zero `eslint.config.js` diff — the zone would grow without
+   anyone deciding it should, and new code would be born non-compliant by
+   default. Listing every file explicitly is what actually delivers the
+   guarantee: **adding a new file to a relaxed area is a deliberate act that
+   shows up in a diff**, because the new file's path has to be typed into
+   the list. There is no opt-out flag by design: a consumer who genuinely
+   needs a glob-shaped relaxation can hand-write a flat-config block
+   directly and own that decision explicitly, rather than routing it through
+   the helper that exists specifically to prevent it. (This pairs with the
+   retirement-trigger requirement above; together they are what stops a
+   path zone from becoming permanent.)
+
+    > **`relaxZones()` is path-zone-only.** It exists to guard tier 4
+    > specifically — carve-outs keyed on _where a file lives_. Tier 3
+    > file-type deviations (e.g. `**/*.cli.ts` and similar "every file of
+    > this kind" globs) are written as a plain flat-config block instead and
+    > deliberately do **not** route through `relaxZones()`. Why: a file-type
+    > glob selects a _kind_ of file wherever it lives in the tree — it does
+    > not attach special treatment to a directory, so it isn't the thing this
+    > guard protects against. Passing a file-type glob into `relaxZones()`
+    > will throw (same as any other non-literal entry) — that's a signal to
+    > move it to a plain block, not a bug to work around.
+
+    > **Limitation, stated honestly.** The enforcement lives in the
+    > `relaxZones()` helper only. A consumer can still hand-write a
+    > flat-config block with a wildcard `files` glob and bypass it entirely
+    > — nothing in this package stops that. The helper makes the easy path
+    > the correct path; it is not a hard guarantee against a determined
+    > bypass.
+
+5. **Per-site justified disable** — an inline `eslint-disable` with a `--
+reason`, counted against the single-digit budget.
+
+> **Guard.** A path zone may never be introduced _to make a gate green_ — that
+> is the p-hacking anti-pattern applied to configuration instead of code.
+> Reach for step 4 because the exemption is genuinely structural, never
+> because it's the fastest way past CI.
+
+---
+
+## Waiver-registry contract
+
+Each adopting repo keeps its own `docs/FLIGHTCODE_WAIVERS.md`. Every entry
+must carry, at minimum:
+
+- **The rule** being waived (its full ESLint id).
+- **The specific sites** — files/globs/line ranges, not "some places".
+- **The rationale** — why this site's violation is conformance, not defect.
+- **A retirement trigger** — the condition under which the waiver is
+  revisited (e.g. "when the SDK ships typed responses", "when highland's
+  test-double count under 200").
+
+Budget stays single-digit per repo, same as the inline-disable budget —
+a waiver registry is not a way to launder an unbounded exemption list.
 
 ---
 
