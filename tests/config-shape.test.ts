@@ -24,8 +24,12 @@ function isTestScopedBlock(block: Linter.Config): boolean {
     if (!Array.isArray(block.files) || block.files.length === 0) {
         return false;
     }
+    // Anchored on purpose: a bare /test/i also matches "contest/**" and
+    // "attestation/**", which would silently skip a production block and
+    // resolve the wrong effective value.
+    const testScoped = /(^|\/)tests?\/|\.test\.[cm]?[jt]sx?$/;
     return block.files.every(
-        (glob) => typeof glob === "string" && /test/i.test(glob),
+        (glob) => typeof glob === "string" && testScoped.test(glob),
     );
 }
 
