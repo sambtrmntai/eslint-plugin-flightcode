@@ -198,18 +198,49 @@ describe("configs.recommended", () => {
 
 describe("relaxZones()", () => {
     it("returns a single override block with the given globs and rules", () => {
-        expect(relaxZones(["demo/**"], { "no-console": "off" })).toEqual({
-            files: ["demo/**"],
+        expect(relaxZones(["demo/*.ts"], { "no-console": "off" })).toEqual({
+            files: ["demo/*.ts"],
+            rules: { "no-console": "off" },
+        });
+    });
+
+    it("accepts an explicit file list", () => {
+        const globs = ["scripts/build.ts", "scripts/deploy.ts"];
+        expect(relaxZones(globs, { "no-console": "off" })).toEqual({
+            files: globs,
             rules: { "no-console": "off" },
         });
     });
 
     it("is pure — same inputs produce equal (not identical) output", () => {
-        const globs = ["scripts/**"];
+        const globs = ["scripts/*.ts"];
         const rules: Linter.RulesRecord = { "no-console": "warn" };
         const first = relaxZones(globs, rules);
         const second = relaxZones(globs, rules);
         expect(first).toEqual(second);
         expect(first).not.toBe(second);
+    });
+
+    it("rejects a single recursive glob, naming it and the fix", () => {
+        expect(() => relaxZones(["demo/**"], { "no-console": "off" })).toThrow(
+            'relaxZones: recursive glob "demo/**" is not allowed — a path ' +
+                "zone must not silently swallow new files. Use a " +
+                'non-recursive glob ("demo/*.ts") or an explicit file ' +
+                'list. See FLIGHTCODE.md "Exemption hierarchy".',
+        );
+    });
+
+    it("rejects a recursive glob with an interior segment", () => {
+        expect(() =>
+            relaxZones(["**/scripts/**"], { "no-console": "off" }),
+        ).toThrow(/recursive glob "\*\*\/scripts\/\*\*" is not allowed/);
+    });
+
+    it("reports every offender in a mixed array, not just the first", () => {
+        expect(() =>
+            relaxZones(["demo/**", "scripts/build.ts", "website/**"], {
+                "no-console": "off",
+            }),
+        ).toThrow(/"demo\/\*\*", "website\/\*\*"/);
     });
 });
