@@ -94,6 +94,15 @@ export const recommended = [
             "jsdoc/require-param-description": "error",
             "jsdoc/require-returns": "error",
             "jsdoc/require-returns-description": "error",
+            // Pillar 2c names @throws/failure modes as a canonical prologue
+            // field, but this rule arrives "off" by preset default and was
+            // never turned back on until now. Passed all three admission
+            // tests (Sam, 2026-08-04): traces to Pillar 2c (test 1); detects
+            // exactly the undocumented-throw case, covered by no other
+            // Tier-1 rule (test 2); measured 76 real hits in highland,
+            // sampled ones genuine omissions (test 3). See FLIGHTCODE.md
+            // "Version history" 0.2.0 for the full rationale.
+            "jsdoc/require-throws": "error",
             // ── Deviation protocol: eslint-disable must be justified ──────────
             "eslint-comments/require-description": ["error", { ignore: [] }],
             "eslint-comments/no-unused-disable": "error",
